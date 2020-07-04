@@ -22,6 +22,8 @@ public:
 };
 
 Worker::Worker(const char *ip, const int port) {
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
+
   sock_ = socket(AF_INET, SOCK_DGRAM, 0);
 
   struct sockaddr_in addr;
@@ -32,10 +34,12 @@ Worker::Worker(const char *ip, const int port) {
 
   efd_ = eventfd(0, 0);
 
-  std::cout << "Wait by " << ip << ":" << port << std::endl;
+  std::cout << "  " << "Wait by " << ip << ":" << port << std::endl;
 }
 
 void Worker::ThreadFunc() {
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
+
   fd_set fds, rfds;
   FD_ZERO(&rfds);
 
@@ -53,20 +57,24 @@ void Worker::ThreadFunc() {
       char buf[256];
       memset(buf, 0, sizeof(buf));
       recv(sock_, buf, sizeof(buf), 0);
-      std::cout << "recv from socket: " << buf << std::endl;
+      std::cout << "  " << "recv from socket: " << buf << std::endl;
     }
     if (FD_ISSET(efd_, &fds)) {
-      std::cout << "recv from eventfd" << std::endl;
+      std::cout << "  " << "recv from eventfd" << std::endl;
       break;
     }
   }
 }
 
 void Worker::Start() {
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
+
   th_ = std::thread([this] { ThreadFunc(); });
 }
 
 void Worker::Shutdown() {
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
+
   int num = 1;
   write(efd_, &num, sizeof(num));
 }
