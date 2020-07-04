@@ -31,6 +31,8 @@ Worker::Worker(const char *ip, const int port) {
   bind(sock_, (struct sockaddr *)&addr, sizeof(addr));
 
   efd_ = eventfd(0, 0);
+
+  std::cout << "Wait by " << ip << ":" << port << std::endl;
 }
 
 void Worker::ThreadFunc() {
