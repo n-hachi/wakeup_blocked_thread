@@ -19,22 +19,30 @@ public:
   Worker(const char *ip, const int port);
   void Start();
   void Shutdown();
+  void Join();
 };
 
 Worker::Worker(const char *ip, const int port) {
   std::cout << __PRETTY_FUNCTION__ << std::endl;
 
-  sock_ = socket(AF_INET, SOCK_DGRAM, 0);
+  if((sock_ = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
+    throw "socket() error";
+  }
 
   struct sockaddr_in addr;
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
   addr.sin_addr.s_addr = inet_addr(ip);
-  bind(sock_, (struct sockaddr *)&addr, sizeof(addr));
+  if(bind(sock_, (struct sockaddr *)&addr, sizeof(addr)) == -1){
+    throw "bind() error";
+  }
 
-  efd_ = eventfd(0, 0);
+  if((efd_ = eventfd(0, 0)) == -1){
+    throw "eventfd() error";
+  }
 
-  std::cout << "  " << "Wait by " << ip << ":" << port << std::endl;
+  std::cout << "  "
+            << "Wait by " << ip << ":" << port << std::endl;
 }
 
 void Worker::ThreadFunc() {
@@ -57,10 +65,14 @@ void Worker::ThreadFunc() {
       char buf[256];
       memset(buf, 0, sizeof(buf));
       recv(sock_, buf, sizeof(buf), 0);
-      std::cout << "  " << "recv from socket: " << buf << std::endl;
+      std::cout << "  "
+                << "recv from socket: " << buf << std::endl;
     }
     if (FD_ISSET(efd_, &fds)) {
-      std::cout << "  " << "recv from eventfd" << std::endl;
+      int num = 0;
+      read(efd_, &num, sizeof(num));
+      std::cout << "  "
+                << "recv from eventfd" << std::endl;
       break;
     }
   }
@@ -76,7 +88,20 @@ void Worker::Shutdown() {
   std::cout << __PRETTY_FUNCTION__ << std::endl;
 
   int num = 1;
-  write(efd_, &num, sizeof(num));
+  if(write(efd_, &num, sizeof(num)) == -1){
+    std::cout << "efd_ = " << efd_ << std::endl;
+    throw "write() error";
+  }
+}
+
+void Worker::Join() {
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
+
+  if (th_.joinable()) {
+    th_.join();
+  }
+
+  std::cout << "end" << std::endl;
 }
 
 int main(int argc, char const *argv[]) {
@@ -84,5 +109,7 @@ int main(int argc, char const *argv[]) {
   worker.Start();
   getchar();
   std::cout << "getchar" << std::endl;
+  worker.Shutdown();
+  worker.Join();
   return 0;
 }
