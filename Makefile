@@ -1,7 +1,7 @@
 CXX = g++
 LDFLAGS = -pthread
 CPPFLAGS = -MMD -MP
-TARGET = sample
+TARGET = sample.exe
 SRCS := $(shell find . -name *.cpp -or -name *.c -or -name *.s)
 OBJS := $(SRCS:.c=.o)
 DEPS := $(OBJS:.o=.d)
