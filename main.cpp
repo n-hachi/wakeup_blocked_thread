@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <cstring>
 #include <iostream>
 #include <netinet/in.h>
 #include <sys/eventfd.h>
@@ -41,6 +42,22 @@ void Worker::ThreadFunc() {
   max_fd = (sock_ > max_fd ? sock_ : max_fd);
   FD_SET(efd_, &rfds);
   max_fd = (efd_ > max_fd ? efd_ : max_fd);
+
+  while (1) {
+    std::memcpy(&fds, &rfds, sizeof(fd_set));
+    select(max_fd, &fds, NULL, NULL, NULL);
+
+    if (FD_ISSET(sock_, &fds)) {
+      char buf[256];
+      memset(buf, 0, sizeof(buf));
+      recv(sock_, buf, sizeof(buf), 0);
+      std::cout << "recv from socket: " << buf << std::endl;
+    }
+    if (FD_ISSET(efd_, &fds)) {
+      std::cout << "recv from eventfd" << std::endl;
+      break;
+    }
+  }
 }
 
 void Worker::Start() {
@@ -54,5 +71,8 @@ void Worker::Shutdown() {
 
 int main(int argc, char const *argv[]) {
   Worker worker("0.0.0.0", 10000);
+  worker.Start();
+  getchar();
+  std::cout << "getchar" << std::endl;
   return 0;
 }
