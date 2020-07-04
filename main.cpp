@@ -25,7 +25,7 @@ public:
 Worker::Worker(const char *ip, const int port) {
   std::cout << __PRETTY_FUNCTION__ << std::endl;
 
-  if((sock_ = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
+  if ((sock_ = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
     throw "socket() error";
   }
 
@@ -33,11 +33,11 @@ Worker::Worker(const char *ip, const int port) {
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
   addr.sin_addr.s_addr = inet_addr(ip);
-  if(bind(sock_, (struct sockaddr *)&addr, sizeof(addr)) == -1){
+  if (bind(sock_, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
     throw "bind() error";
   }
 
-  if((efd_ = eventfd(0, 0)) == -1){
+  if ((efd_ = eventfd(0, 0)) == -1) {
     throw "eventfd() error";
   }
 
@@ -59,7 +59,7 @@ void Worker::ThreadFunc() {
 
   while (1) {
     std::memcpy(&fds, &rfds, sizeof(fd_set));
-    if(select(max_fd + 1, &fds, NULL, NULL, NULL) == -1){
+    if (select(max_fd + 1, &fds, NULL, NULL, NULL) == -1) {
       throw "select() error";
     }
 
@@ -90,7 +90,7 @@ void Worker::Shutdown() {
   std::cout << __PRETTY_FUNCTION__ << std::endl;
 
   uint64_t num = 1;
-  if(write(efd_, &num, sizeof(num)) == -1){
+  if (write(efd_, &num, sizeof(num)) == -1) {
     std::cout << "efd_ = " << efd_ << std::endl;
     throw "write() error";
   }
