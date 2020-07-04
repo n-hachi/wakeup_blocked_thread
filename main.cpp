@@ -59,7 +59,9 @@ void Worker::ThreadFunc() {
 
   while (1) {
     std::memcpy(&fds, &rfds, sizeof(fd_set));
-    select(max_fd, &fds, NULL, NULL, NULL);
+    if(select(max_fd + 1, &fds, NULL, NULL, NULL) == -1){
+      throw "select() error";
+    }
 
     if (FD_ISSET(sock_, &fds)) {
       char buf[256];
@@ -69,7 +71,7 @@ void Worker::ThreadFunc() {
                 << "recv from socket: " << buf << std::endl;
     }
     if (FD_ISSET(efd_, &fds)) {
-      int num = 0;
+      uint64_t num = 0;
       read(efd_, &num, sizeof(num));
       std::cout << "  "
                 << "recv from eventfd" << std::endl;
@@ -87,7 +89,7 @@ void Worker::Start() {
 void Worker::Shutdown() {
   std::cout << __PRETTY_FUNCTION__ << std::endl;
 
-  int num = 1;
+  uint64_t num = 1;
   if(write(efd_, &num, sizeof(num)) == -1){
     std::cout << "efd_ = " << efd_ << std::endl;
     throw "write() error";
